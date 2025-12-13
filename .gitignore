@@ -1,0 +1,9 @@
+*.png
+*.txt
+*.bin
+*.zip
+*.tar
+*.gz
+__pycache__/
+*dataset/
+venv/
