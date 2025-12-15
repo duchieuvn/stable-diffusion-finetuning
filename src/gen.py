@@ -3,21 +3,30 @@ import os
 from diffusers import StableDiffusionPipeline, UNet2DConditionModel
 from peft import PeftModel
 
-# ============================================================
 # 1. Configuration
-# ============================================================
+config1 = {
+    "folder_name": "lora_sd15_baby_peft",
+    "default_prompt": "a photo of a baby"
+}
+config2 = {
+    "folder_name": "baby1_50epochs",
+    "default_prompt": "a photo of a baby laying on bed"
+}
+
+def load_config(config):
+    lora_weights_path = f"../runs/{config['folder_name']}"
+    output_folder = f"../generation/{config['folder_name']}"
+    default_prompt = config["default_prompt"]
+    return lora_weights_path, output_folder, default_prompt
+
 BASE_MODEL = "runwayml/stable-diffusion-v1-5"
-LORA_WEIGHTS_PATH = "lora_sd15_baby_peft"
-OUTPUT_FOLDER = "generation"  # Folder to store results
-NUM_IMAGES_TO_GENERATE = 4       # <-- How many images you want
+LORA_WEIGHTS_PATH, OUTPUT_FOLDER, DEFAULT_PROMPT = load_config(config1)
+NUM_IMAGES_TO_GENERATE = 4      
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
-# Create the output folder if it doesn't exist
 os.makedirs(OUTPUT_FOLDER, exist_ok=True)
 
-# ============================================================
 # 2. Load UNet and inject LoRA (Same method as before)
-# ============================================================
 print("1. Loading base UNet...")
 unet = UNet2DConditionModel.from_pretrained(
     BASE_MODEL, 
@@ -52,7 +61,7 @@ pipe.enable_vae_tiling()
 # ============================================================
 # 4. Run Batch Generation
 # ============================================================
-prompt = ""
+prompt = DEFAULT_PROMPT
 negative_prompt = "bad quality, blurry, distorted, ugly, deformed hands"
 
 print(f"4. Generating {NUM_IMAGES_TO_GENERATE} images... This might take a moment.")
@@ -73,10 +82,10 @@ images_list = pipeline_output.images
 # 5. Save Images Loop
 # ============================================================
 print(f"5. Saving images to folder: '{OUTPUT_FOLDER}/' ...")
-
+name = prompt.replace(" ", "-")
 for i, img in enumerate(images_list):
     # Generate a filename like batch_results/baby_0.png, baby_1.png, etc.
-    filename = os.path.join(OUTPUT_FOLDER, f"baby_generated_{i}.png")
+    filename = os.path.join(OUTPUT_FOLDER, f"{name}_{i}.png")
     img.save(filename)
     print(f"   -> Saved: {filename}")
 
