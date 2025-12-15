@@ -9,52 +9,18 @@ from tqdm import tqdm
 from diffusers import UNet2DConditionModel, DDPMScheduler, AutoencoderKL
 from transformers import AutoTokenizer, CLIPTextModel
 from peft import LoraConfig, get_peft_model
+from dataset import BabyDataset
 
-# ============================================================
-# 1. Dataset (BabyDataset)
-# ============================================================
-class BabyDataset(torch.utils.data.Dataset):
-    def __init__(self, split="train", dataset_path="baby_dataset"):
-        self.dataset_path = dataset_path
-        self.image_dir = f"{dataset_path}/baby"
-        
-        # Standard SD 1.5 normalization
-        self.resize = transforms.Compose([
-            transforms.Resize((512, 512), interpolation=transforms.InterpolationMode.BILINEAR),
-            transforms.ToTensor(),
-            transforms.Normalize([0.5], [0.5]), # Map to [-1, 1]
-        ])
-        
-        # Load filenames
-        split_file = f"{dataset_path}/baby_{split}.txt"
-        if not os.path.exists(split_file):
-            # Fallback if text file doesn't exist: list dir
-            self.image_files = [f for f in os.listdir(self.image_dir) if f.endswith(('.jpg', '.png'))]
-        else:
-            with open(split_file, "r") as f:
-                self.image_files = [line.strip() for line in f.readlines()]
-
-    def __len__(self):
-        return len(self.image_files)
-
-    def __getitem__(self, idx):
-        img_path = os.path.join(self.image_dir, self.image_files[idx])
-        img = Image.open(img_path).convert("RGB")
-        img = self.resize(img)
-        
-        # You can randomize prompts here if you have a metadata file
-        caption = "a photo of a baby" 
-        return img, caption
 
 # ============================================================
 # 2. Setup Configuration
 # ============================================================
 MODEL_NAME = "runwayml/stable-diffusion-v1-5"
-OUTPUT_DIR = "lora_sd15_baby_peft"
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 BATCH_SIZE = 2 # Higher if you have VRAM
 LR = 1e-4
-NUM_EPOCH = 30 # Adjust based on dataset size
+NUM_EPOCH = 50 # Adjust based on dataset size
+OUTPUT_DIR = f"../runs/baby1_{NUM_EPOCH}epochs"
 
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
@@ -93,7 +59,7 @@ unet.print_trainable_parameters()
 # ============================================================
 optimizer = torch.optim.AdamW(unet.parameters(), lr=LR)
 
-dataset = BabyDataset(split="train", dataset_path="baby_dataset")
+dataset = BabyDataset(dataset_path="../dataset/baby1")
 train_dataloader = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=True, num_workers=2)
 
 # ============================================================
