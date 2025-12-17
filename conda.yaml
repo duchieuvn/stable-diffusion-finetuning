@@ -20,3 +20,4 @@ dependencies:
       - xformers==0.0.29   # optional, GPU speed-up
       - pillow==10.2.0
       - tqdm
+      - matplotlib
