@@ -1,0 +1,16 @@
+nohup: Eingabe wird ignoriert
+/home/8f95/.conda/envs/sd/lib/python3.10/site-packages/torchvision/io/image.py:13: UserWarning: Failed to load image Python extension: '/home/8f95/.conda/envs/sd/lib/python3.10/site-packages/torchvision/image.so: undefined symbol: _ZN3c1017RegisterOperatorsD1Ev'If you don't plan on using image functionality from `torchvision.io`, you can ignore this warning. Otherwise, there might be something wrong with your environment. Did you have `libjpeg` or `libpng` installed before building `torchvision` from source?
+  warn(
+Loading models from SG161222/Realistic_Vision_V5.1_noVAE...
+Traceback (most recent call last):
+  File "/home/8f95/stable-diffusion-finetuning/src/train.py", line 359, in <module>
+    main(config)
+  File "/home/8f95/stable-diffusion-finetuning/src/train.py", line 255, in main
+    tokenizer, noise_scheduler, text_encoder, vae, unet = load_models(config)
+  File "/home/8f95/stable-diffusion-finetuning/src/train.py", line 74, in load_models
+    unet.enable_attention_slicing()
+  File "/home/8f95/.conda/envs/sd/lib/python3.10/site-packages/diffusers/models/modeling_utils.py", line 151, in __getattr__
+    return super().__getattr__(name)
+  File "/home/8f95/.conda/envs/sd/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1931, in __getattr__
+    raise AttributeError(
+AttributeError: 'UNet2DConditionModel' object has no attribute 'enable_attention_slicing'

@@ -80,7 +80,7 @@ class JennieDataset(torch.utils.data.Dataset):
             with open(caption_path, "r") as f:
                 caption = f.read().strip()
         else:
-            caption = "a photo of Jennie Blackpink"
+            caption = "J3NN13"
         
 
         return img, caption

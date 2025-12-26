@@ -18,8 +18,12 @@ CONFIG_PRESETS = {
         "default_prompt": "a photo of a baby crawling on the floor"
     },
     "config3": {
-        "folder_name": "baby1_150_r32a16",
-        "default_prompt": "a baby crawling on the floor in a room"
+        "folder_name": "jennie1_80_r32a16",
+        "default_prompt": "an upper body view of Jennie Blackpink on stage"
+    },
+    "config4": {
+        "folder_name": "jennie1_80_r32a16",
+        "default_prompt": "J3NN13"
     }
 }
 
@@ -90,17 +94,17 @@ def sampling(pipeline, config):
     prompt = config["default_prompt"]
     output_folder = config["output_folder"]
     os.makedirs(output_folder, exist_ok=True)
-    num_images = 4
+    num_images = 8
     
     print(f"Generating {num_images} images...")
     print(f"Prompt: '{prompt}'")
-    negative_prompt = "ugly, tiling, ugly hands, ugly feet, " 
+    negative_prompt = "ugly, tiling, deformed hands, deformed eyes " 
     # Generate images
     pipeline_output = pipeline(
         prompt=prompt,
         negative_prompt=negative_prompt,
-        num_inference_steps=100,
-        guidance_scale=7.5,
+        num_inference_steps=60,
+        # guidance_scale=7.5,
         num_images_per_prompt=num_images
     )
     
@@ -119,10 +123,10 @@ def sampling(pipeline, config):
     return images
 
 
-def main():
+def main(config_version="config4"):
     """Main execution function."""
     # Load configuration
-    config = load_config("config3")
+    config = load_config(config_version)
     
     # Load model with LoRA weights
     pipeline = load_model(config)
@@ -135,4 +139,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    main("config4")
