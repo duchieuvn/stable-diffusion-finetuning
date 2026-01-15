@@ -1,0 +1,36 @@
+# Stable Diffusion Training Configuration
+
+# Model configuration
+model_name: "SG161222/Realistic_Vision_V5.1_noVAE"
+dataset_version: "v4"
+
+# Training parameters
+training:
+  batch_size: 2
+  gradient_accumulation_steps: 2
+  learning_rate: 5.0e-5
+  num_epochs: 300
+  sample_every_n_epochs: 2
+
+# LoRA configuration
+lora:
+  r: 32
+  alpha: 16
+  dropout: 0.1
+  target_modules:
+    - "to_k"
+    - "to_q"
+    - "to_v"
+    - "to_out.0"
+
+# Output configuration
+output:
+  dir_prefix: "../runs/J3NN13"
+  
+# Model-specific parameters
+vae_scaling_factor: 0.18215
+
+# Sample prompts for evaluation during training
+sample_prompts:
+  - "J3NN13 close-up selfie in a room background"
+  - "J3NN13 close-up, revealing chest"

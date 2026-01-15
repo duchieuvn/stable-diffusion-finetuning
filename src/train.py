@@ -1,6 +1,7 @@
 import os
 from datetime import datetime
 import shutil
+import yaml
 import torch
 import torch.nn.functional as F
 from torch.utils.data import DataLoader
@@ -18,32 +19,51 @@ os.environ['TOKENIZERS_PARALLELISM'] = 'false'
 # ============================================================ 
 # 1. Configuration Setup
 # ============================================================ 
-def get_config(config_json=None):
+def load_yaml_config(config_path="training_config.yaml"):
+    """
+    Load configuration from external YAML file.
+    
+    Args:
+        config_path: Path to the YAML configuration file
+        
+    Returns:
+        dict: Configuration dictionary
+    """
+    if not os.path.isabs(config_path):
+        config_path = os.path.join(os.path.dirname(__file__), config_path)
+    
+    with open(config_path, 'r') as f:
+        return yaml.safe_load(f)
+
+
+def get_config(yaml_config=None):
     """
     Returns a dictionary of configuration parameters for the training.
     """
-    if config_json is None:
-        config = {
-            "model_name": "SG161222/Realistic_Vision_V5.1_noVAE",
-            "device": "cuda" if torch.cuda.is_available() else "cpu",
-            "batch_size": 2,
-            "gradient_accumulation_steps": 2,
-            "lr": 1e-4,
-            "num_epoch": 80,
-            "output_dir_prefix": "../runs/jennie1",
-            "sample_every_n_epochs": 10,
-            "sample_prompts": ["J3NN13"],
-            "lora_r": 32,
-            "lora_alpha": 16,
-            "lora_dropout": 0.1,
-            "lora_target_modules": ["to_k", "to_q", "to_v", "to_out.0"],
-            "vae_scaling_factor": 0.18215,
-        }
-    else:
-        config = config_json
+    if yaml_config is None:
+        yaml_config = load_yaml_config()
+    
+    # Build config from YAML structure
+    config = {
+        "model_name": yaml_config["model_name"],
+        "jennie_version": yaml_config["dataset_version"],
+        "device": "cuda" if torch.cuda.is_available() else "cpu",
+        "batch_size": yaml_config["training"]["batch_size"],
+        "gradient_accumulation_steps": yaml_config["training"]["gradient_accumulation_steps"],
+        "lr": yaml_config["training"]["learning_rate"],
+        "num_epoch": yaml_config["training"]["num_epochs"],
+        "output_dir_prefix": yaml_config["output"]["dir_prefix"],
+        "sample_every_n_epochs": yaml_config["training"]["sample_every_n_epochs"],
+        "sample_prompts": yaml_config["sample_prompts"],
+        "lora_r": yaml_config["lora"]["r"],
+        "lora_alpha": yaml_config["lora"]["alpha"],
+        "lora_dropout": yaml_config["lora"]["dropout"],
+        "lora_target_modules": yaml_config["lora"]["target_modules"],
+        "vae_scaling_factor": yaml_config["vae_scaling_factor"],
+    }
 
     date_str = datetime.now().strftime("%d-%m-%Y")
-    config["output_dir"] = f"{config['output_dir_prefix']}_{config['num_epoch']}_r{config['lora_r']}a{config['lora_alpha']}_{date_str}"
+    config["output_dir"] = f"{config['output_dir_prefix']}_{config['jennie_version']}_{config['num_epoch']}_r{config['lora_r']}a{config['lora_alpha']}_{date_str}"
     config["samples_dir"] = os.path.join(config["output_dir"], "samples")
     config["plots_dir"] = os.path.join(config["output_dir"], "plots")
     
@@ -102,7 +122,7 @@ def get_dataloader(config):
     """
     Creates the DataLoader for the training dataset.
     """
-    dataset = JennieDataset(version='v2')
+    dataset = JennieDataset(version=config['jennie_version'])
     return DataLoader(
         dataset,
         batch_size=config['batch_size'],
@@ -239,16 +259,24 @@ def plot_training_metrics(all_losses, epoch_losses, plots_dir):
 # ============================================================ 
 # 7. Main Training Loop
 # ============================================================ 
-def main(config_json=None):
+def main():
     """
     Main function to orchestrate the LoRA fine-tuning process.
     """
-    config = get_config(config_json)
+    # Load YAML configuration
+    yaml_config = load_yaml_config()
+    config = get_config(yaml_config)
     
     # Create directories
     os.makedirs(config['output_dir'], exist_ok=True)
     os.makedirs(config['samples_dir'], exist_ok=True)
     os.makedirs(config['plots_dir'], exist_ok=True)
+    
+    # Copy config file to output directory for reference
+    config_source = os.path.join(os.path.dirname(__file__), "training_config.yaml")
+    config_dest = os.path.join(config['output_dir'], "training_config.yaml")
+    shutil.copy(config_source, config_dest)
+    print(f"📋 Config saved to: {config_dest}")
     
     # Load components
     tokenizer, noise_scheduler, text_encoder, vae, unet = load_models(config)
@@ -335,20 +363,4 @@ def main(config_json=None):
     print("="*60)
 
 if __name__ == "__main__":
-    config = {
-            "model_name": "SG161222/Realistic_Vision_V5.1_noVAE",
-            "device": "cuda" if torch.cuda.is_available() else "cpu",
-            "batch_size": 2,
-            "gradient_accumulation_steps": 2,
-            "lr": 5e-5,
-            "num_epoch": 100,
-            "output_dir_prefix": "../runs/jennie2",
-            "sample_every_n_epochs": 2,
-            "sample_prompts": ["J3NN13"],
-            "lora_r": 32,
-            "lora_alpha": 16,
-            "lora_dropout": 0.1,
-            "lora_target_modules": ["to_k", "to_q", "to_v", "to_out.0"],
-            "vae_scaling_factor": 0.18215,
-        }
-    main(config)
+    main()
