@@ -1,0 +1,18 @@
+{
+  "lora_folder": "J3NN13_v4_300_r32a16_15-01-2026",
+  "base_model": "SG161222/Realistic_Vision_V5.1_noVAE",
+  "gen_folder": "/home/8f95/stable-diffusion-finetuning/src/../testgen/J3NN13_v4_300_r32a16_15-01-2026/5prompts_4imgs_s60_g6",
+  "reference_dir": "/home/8f95/stable-diffusion-finetuning/src/../dataset/jennie_v3/images",
+  "num_generated_images": 20,
+  "timestamp": "1768657512.6265886",
+  "lpips": {
+    "score": 0.7651030451059342,
+    "std": 0.045103576961931596,
+    "num_pairs": 20,
+    "interpretation": "Weak identity preservation"
+  },
+  "fid": {
+    "score": 186.58249897761593,
+    "interpretation": "Poor quality"
+  }
+}

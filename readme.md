@@ -74,14 +74,6 @@ cd src
 python gen.py
 ```
 
-### Dataset Preparation
-
-Prepare the STL-10 dataset:
-
-```bash
-python stl10prepare.py
-```
-
 ## Configuration
 
 Edit the YAML files to customize training and generation:
@@ -90,5 +82,35 @@ Edit the YAML files to customize training and generation:
 - **generation_config.yaml**: Number of images, inference steps, guidance scale, prompts
 
 ## Results
+
+### Experiment 1: Baseline with Simple Trigger Word (v1 Captions)
+
+![Experiment 1 Best Samples](docs/assets/exp1_best.png)
+
+Single unique trigger word "J3NN13" with minimal contextual information. Achieves reasonable identity preservation but limited to close-up portraits similar to training images.
+
+### Experiment 2: Detailed Attribute Tags (v2 Captions)
+
+![Experiment 2 Best Samples](docs/assets/exp2_best.png)
+
+Rich keyword annotations combining trigger word with detailed attribute descriptors (expressions, camera framing, appearance details). Provides diverse contextual information but requires more training for optimal results.
+
+### Experiment 3: Simplified Attribute Tags (v3 Captions)
+
+![Experiment 3 Best Samples](docs/assets/exp3_best.png)
+
+Balanced approach with simplified comma-separated keywords focusing on essential identity and contextual features. Good balance between annotation simplicity and attribute diversity.
+
+### Experiment 4: Cross-Model Transfer Learning
+
+![Experiment 4 Best Samples](docs/assets/exp4_best.png)
+
+LoRA weights trained on Stable Diffusion v1.5 with v3 captions, then applied to Realistic Vision model for inference. Demonstrates best identity preservation (lowest LPIPS of 0.752) by leveraging photorealistic model capabilities.
+
+### Metrics Summary
+
+![Metrics Comparison](docs/assets/_metrics.png)
+
+LPIPS and FID scores across all experiments, showing trade-offs between identity preservation and overall generation quality.
 
 Generated images and experiments are stored in the `generation/` directory organized by experiment configurations and timestamps.

@@ -6,6 +6,7 @@
 \usepackage{booktabs}
 \usepackage{float}
 \usepackage{amsmath}
+\usepackage{amssymb}
 \usepackage[none]{hyphenat}
 \usepackage[
   backend=biber,
@@ -39,10 +40,10 @@
 
     \vspace{1.5cm}
     
-    {\fontsize{20}{80}\selectfont 
+    {\fontsize{18}{30}\selectfont 
         \bfseries 
-        Personalized Image Generation with Stable Diffusion: \\[6pt]
-        A PyTorch-Based LoRA Fine-Tuning Approach \\[6pt]
+        PERSONALIZED IMAGE GENERATION WITH STABLE DIFFUSION: \\[4pt]
+        PYTORCH LORA FINE-TUNING APPROACH \\[6pt]
     }
 
     \vspace{1.5cm}
@@ -80,28 +81,28 @@
 
 \section{Introduction}
 
-Recent advances in diffusion models, particularly Stable Diffusion \\cite{rombach2022high}, have demonstrated remarkable capabilities in text-to-image generation. However, generating highly personalized images of specific subjects or celebrities remains challenging, as it requires the model to learn and preserve identity-specific features while remaining generalizable to diverse prompts and contexts.
+Recent advances in diffusion models, particularly Stable Diffusion \cite{rombach2022high}, have demonstrated remarkable capabilities in text-to-image generation. However, generating highly personalized images of specific subjects or celebrities remains challenging, as it requires the model to learn and preserve identity-specific features while remaining generalizable to diverse prompts and contexts.
 
-Traditional approaches to this problem have relied on UI-based tools such as Kohya and A1111 WebUI, which abstract away the underlying PyTorch implementation details. While these tools are user-friendly, they limit customization and reproducibility for research purposes.
+A popular modern approache to this problem have relied on UI-based tools such as Kohya and A1111 WebUI, which abstract away the underlying PyTorch configuration details. While these tools offer user accessibility, they limit customization and reproducibility for research purposes.
 
-This project aims to achieve personalized image generation performance comparable to existing tutorials and tools, but using pure PyTorch code. By implementing Low-Rank Adaptation (LoRA) fine-tuning from scratch, we provide a transparent, modular, and extensible framework for personalization that facilitates both research and experimentation.
+This work presents a PyTorch-based implementation achieving personalized image generation performance comparable to existing community tools and tutorials. By implementing Low-Rank Adaptation (LoRA) fine-tuning from first principles, this study provides a transparent, modular, and extensible framework for personalization that facilitates reproducible research and systematic experimentation.
 
-The motivation for this work is threefold:
+The objectives of this work are threefold:
 \begin{enumerate}
-  \item To provide a reproducible, open-source PyTorch implementation for Stable Diffusion personalization
-  \item To systematically study the impact of caption quality on model performance
-  \item To establish evaluation metrics (LPIPS and FID) for quantifying generation quality and identity preservation
+  \item Provide a reproducible, open-source PyTorch implementation for Stable Diffusion personalization
+  \item Systematically study the impact of caption structure and other hyperparameters on model performance
+  \item Establish quantitative evaluation metrics (LPIPS and FID) for assessing generation quality and identity preservation
 \end{enumerate}
 
-\section{Related Work}
+\section{Related work}
 
-\subsection{Diffusion Models and Stable Diffusion}
+\subsection{Diffusion models and Stable Diffusion}
 
-Diffusion models have emerged as a powerful class of generative models, achieving state-of-the-art results in image synthesis. Stable Diffusion \\cite{rombach2022high} builds upon this foundation by combining diffusion models with latent space representations, enabling efficient high-quality image generation. The architecture comprises three main components: a text encoder (CLIP), a UNet-based denoising network, and a variational autoencoder (VAE).
+Diffusion models have emerged as a powerful class of generative models, achieving state-of-the-art results in image synthesis \cite{ho2020denoising}. Stable Diffusion \cite{rombach2022high} builds upon this foundation by combining diffusion models with latent space representations, enabling efficient high-quality image generation. The architecture comprises three main components: a text encoder (CLIP) \cite{radford2021learning}, a UNet-based denoising network, and a variational autoencoder (VAE) \cite{kingma2013auto}.
 
-\subsection{Low-Rank Adaptation (LoRA)}
+\subsection{Low-rank adaptation (LoRA)}
 
-Full model fine-tuning requires updating billions of parameters, which is computationally expensive and prone to overfitting on small datasets. Low-Rank Adaptation (LoRA) \\cite{hu2021lora} addresses this by introducing trainable low-rank decomposition matrices into the network. Instead of updating the weight matrix $W$, LoRA decomposes the weight update as:
+Full model fine-tuning requires updating billions of parameters, which is computationally expensive and prone to overfitting on small datasets. Low-Rank Adaptation (LoRA) \cite{hu2021lora} addresses this by introducing trainable low-rank decomposition matrices into the network. Instead of updating the weight matrix $W$, LoRA decomposes the weight update as:
 
 \[
 \Delta W = BA^T
@@ -109,235 +110,348 @@ Full model fine-tuning requires updating billions of parameters, which is comput
 
 where $B \in \mathbb{R}^{d \times r}$ and $A \in \mathbb{R}^{k \times r}$, with $r \ll \min(d, k)$ (typically $r=8$ or $r=16$). This dramatically reduces the number of trainable parameters while maintaining model expressiveness. LoRA is particularly effective for Stable Diffusion personalization, where only the attention layers in the UNet are typically adapted.
 
-\subsection{Personalized Image Generation}
+\subsection{Personalized image generation}
 
 Personalized image generation aims to teach the model to recognize and generate specific subjects (e.g., a particular person or object). Common approaches include:
 
 \begin{itemize}
-  \item \textbf{Textual Inversion:} Learns a new token embedding to represent a subject, requiring only 3-5 reference images but producing less flexible results.
-  \item \textbf{DreamBooth:} Uses subject-specific identifiers combined with class-preservation loss to achieve high-fidelity personalization.
+  \item \textbf{Textual Inversion:} Learns a new token embedding to represent a subject \cite{gal2022textual}, requiring only 3-5 reference images but producing less flexible results.
+  \item \textbf{DreamBooth:} Uses subject-specific identifiers combined with class-preservation loss to achieve high-fidelity personalization \cite{ruiz2023dreambooth}.
   \item \textbf{LoRA Fine-Tuning:} Adapts attention layers with low-rank updates, balancing efficiency and quality. This approach is implemented in popular community tools like Kohya and A1111 WebUI.
 \end{itemize}
 
-\subsection{Impact of Caption Quality on Model Performance}
-
-Recent community research emphasizes the critical role of caption quality in personalization outcomes. The caption strategy directly affects both identity preservation and generation diversity:
-
-\begin{enumerate}
-  \item \textbf{Generic captions (v1):} Using simple, fixed identifiers (e.g., ``J3NN13 person'') for all training images. This approach is fastest to prepare but may limit generation diversity and potentially reduce model generalization.
-  \item \textbf{Detailed captions (v2):} Rich descriptions including appearance (hair, facial features), clothing, pose, background context, distance to camera, and shot angle. This approach provides maximum diversity but requires significant manual annotation effort.
-  \item \textbf{General captions (v3):} Moderate descriptions providing balanced detail and diversity without excessive labeling effort. Often considered a practical middle ground.
-\end{enumerate}
-
-\subsection{Evaluation Metrics for Personalized Generation}
+\subsection{Evaluation metrics}
 
 Quantitatively evaluating personalized image generation requires metrics that capture both identity preservation and overall synthesis quality:
 
 \begin{itemize}
-  \item \textbf{LPIPS (Learned Perceptual Image Patch Similarity):} Measures perceptual similarity between generated and training reference images using features from a pre-trained deep network (typically AlexNet). Lower values indicate better identity preservation. Benchmark targets: $< 0.15$ (excellent), $0.15-0.25$ (good), $> 0.25$ (weak).
-  \item \textbf{FID (Fr\\'echet Inception Distance):} Measures statistical distance between generated and reference image feature distributions using the Inception-v3 network. Lower values indicate better overall generation quality and diversity. Benchmark targets: $< 10$ (excellent), $10-30$ (good), $30-50$ (moderate), $> 50$ (poor).
+  \item \textbf{LPIPS (Learned Perceptual Image Patch Similarity):} Measures perceptual similarity between generated and training reference images using features from a pre-trained deep network (typically AlexNet) \cite{zhang2018unreasonable}. Lower values indicate better identity preservation. Benchmark targets: $< 0.15$ (excellent), $0.15-0.25$ (good), $> 0.25$ (weak).
+  \item \textbf{FID (Frechet Inception Distance):} Measures statistical distance between generated and reference image feature distributions using the Inception-v3 network \cite{heusel2017gans}. Lower values indicate better overall generation quality and diversity. Benchmark targets: $< 10$ (excellent), $10-30$ (good), $30-50$ (moderate), $> 50$ (poor).
 \end{itemize}
 
-\subsection{Community Tools and Motivation for PyTorch Implementation}
+\subsection{Community tools and motivation for PyTorch implementation}
 
-UI-based tools like Kohya and A1111 WebUI have democratized LoRA fine-tuning by providing user-friendly interfaces and pre-configured settings. However, these tools often obscure implementation details, limiting research flexibility and code reproducibility. This work implements an equivalent PyTorch-based pipeline, following established community configurations while providing fully interpretable, modular code suitable for research and experimentation.
+UI-based tools such as Kohya and A1111 WebUI have enabled broader adoption of LoRA fine-tuning through user-friendly interfaces and pre-configured settings, and are accompanied by practical community guides detailing SD~1.5 workflows \cite{arbues2024lora,civitai2024celebrity}. However, these tools typically obscure implementation details, limiting research flexibility and code reproducibility. This work implements an equivalent PyTorch-based pipeline that follows established community configurations while providing fully interpretable, modular code suitable for research and controlled experimentation.
 
-\section{Dataset Preparation and Experimental Setup}
+\section{Dataset preparation and experimental setup}
 
-\subsection{Data Collection and Preprocessing}
+\subsection{Data collection and preprocessing}
 
-For this study, we compiled a dataset of celebrity images (Jennie) to evaluate personalized generation. The dataset preparation process involved three steps:
+A dataset comprising 151 images of a target subject (Jennie) was assembled to evaluate personalized generation capabilities. The dataset preparation process involved two primary steps:
 
 \begin{enumerate}
-  \item \textbf{Image Collection:} Downloaded high-quality reference images of the target subject from public sources.
+  \item \textbf{Image collection:} High-quality reference images of the target subject were curated from public sources.
   
-  \item \textbf{Image Preprocessing:} All images were resized to $512 \times 512$ pixels while preserving the original aspect ratio to maintain quality. Images with excessive occlusion or low quality were manually removed.
+  \item \textbf{Image preprocessing:} All images were standardized to $512 \times 512$ pixels while preserving the original aspect ratio to maintain visual fidelity. Images exhibiting excessive occlusion or low perceptual quality were excluded.
   
-  \item \textbf{Image Captioning:} Images were annotated using three distinct strategies to evaluate the impact of caption quality on model performance (detailed below).
 \end{enumerate}
 
-\subsection{Caption Strategies and Dataset Versions}
+\subsection{Caption strategies and dataset versions}
 
-To systematically study the effect of caption quality, we created three dataset versions with different captioning approaches:
+A keyword-based captioning paradigm was employed across all experiments. This approach relies on learning unique identifiers and descriptive tokens to achieve personalization, contrasting with traditional fine-tuning that updates all model weights. To systematically evaluate the effect of caption structure on model performance, three dataset versions with varying levels of attribute annotation were created:
 
 \begin{itemize}
-  \item \textbf{Version 1 (Generic captions, v1):} All images labeled with a simple identifier ``J3NN13 person''. This represents the minimal caption strategy, testing whether a fixed token can capture subject identity.
+  \item \textbf{Version 1 (v1):} Single unique trigger word ``J3NN13''. This identifier was deliberately chosen to be a non-dictionary word, ensuring the model associates this specific token exclusively with the target subject. All captions in this version consist solely of this trigger word, establishing a minimal baseline where the model must learn identity purely through visual association without additional contextual cues.
   
-  \item \textbf{Version 2 (Detailed captions, v2):} Rich manual descriptions including appearance (hair color/style, facial features), clothing, pose, background context, camera distance (close-up, medium, full-body), and shot angle (frontal, profile, three-quarter). Expected to maximize generation diversity.
+  \item \textbf{Version 2 (v3):} Detailed comma-separated keyword tags combining the trigger word ``J3NN13'' with multiple attribute descriptors: expressions (e.g., ``wink'', ``teeth-smiling''), camera framing (``close-up'', ``straight-look''), appearance details (``long hair'', ``strap top''), and context (``wall background'', ``bright''). Example: ``J3NN13, wink, close-up, straight-look, make-up, tongue-out, braiding hair''. This maximizes attribute diversity and provides rich contextual information alongside the trigger word.
   
-  \item \textbf{Version 3 (General captions, v3):} Moderate-length descriptions providing balanced detail (e.g., ``J3NN13 person wearing blue shirt in a bright room, medium shot'') without exhaustive annotation. Intended as a practical compromise.
+  \item \textbf{Version 3 (v4):} Simplified comma-separated keywords with fewer attributes per image, focusing on essential identity and contextual features. Example: ``J3NN13, wink, close-up, make-up, tongue-out, braiding hair'' or ``J3NN13, close-up, wall background''. This balances attribute specificity with annotation simplicity.
 \end{itemize}
 
+\section{Experimental setup and implementation}
 
-\section{Experimental Setup and Implementation}
+This section documents the iterative experimental methodology employed to optimize personalized image generation. Rather than presenting a single configuration, the evolution of the approach across multiple experiments is described, emphasizing key findings and design decisions. Detailed results for all experiments (excluding Experiment 0) are presented below.
 
-\subsection{Model and Training Configuration}
+\subsection{Initial baseline experiments (experiments 0)}
 
-All experiments utilize the Stable Diffusion v1.5 base model (pretrained on LAION-5B), which provides a strong foundation for personalization. We fine-tune only the attention layers of the UNet denoising network using LoRA with the following configuration:
+Following community tutorials \cite{arbues2024lora} recommending 1500-4500 training steps, we established initial baselines to understand training dynamics:
+
 
 \begin{table}[H]
   \centering
-  \caption{LoRA Fine-Tuning Hyperparameters}
-  \label{tab:hyperparams}
-  \begin{tabular}{@{}lcc@{}}
+  \caption{Experiment 0 configuration}
+  \label{tab:exp0-config}
+  \begin{tabular}{@{}lc@{}}
     \toprule
-    Parameter & Value & Notes \\
+    Parameter & Value \\
     \midrule
-    Learning Rate & $1 \times 10^{-4}$ & Standard for LoRA fine-tuning \\
-    Batch Size & 4-8 & GPU memory constrained \\
-    Training Steps & 1000-2000 & Varies with dataset size \\
-    LoRA Rank ($r$) & 8 or 16 & Low-rank decomposition dimension \\
-    LoRA Alpha & 16 & Scaling factor for LoRA contribution \\
-    Optimizer & AdamW & Standard choice with $\beta_1=0.9, \beta_2=0.999$ \\
-    Scheduler & Linear & Learning rate decay to zero \\
+    Base Model & Stable Diffusion v1.5 (runwayml/stable-diffusion-v1-5) \\
+    Dataset & 151 images with v1 captions \\
+    LoRA Rank ($r$) & 32 \\
+    LoRA Alpha ($\alpha$) & 16 \\
+    Batch Size & 2 \\
+    Training Epochs & 100 \\
     \bottomrule
   \end{tabular}
 \end{table}
 
-\subsection{Training Implementation Details}
+\textbf{Results:} Although the configuration follows established community guidelines from popular Kohya and Automatic1111 tutorials, the results did not achieve the expected performance. Visual quality was poor, with weak identity preservation and significant visual artifacts. This outcome indicated that the training duration was insufficient.
 
-All models were implemented in PyTorch using the Hugging Face \texttt{diffusers} library and trained on NVIDIA GPUs. The training pipeline ensures comparability across experiments:
+\subsection{Realistic base model experiments (experiments 1-3)}
 
-\begin{itemize}
-  \item \textbf{Data Loading:} Images and captions are loaded via custom PyTorch Dataset class with random augmentations (random crops, horizontal flips).
-  \item \textbf{Loss Function:} Mean Squared Error (MSE) between predicted and actual noise in the latent space, standard for diffusion model training.
-  \item \textbf{Validation:} Every 100 steps, we generate sample images using learned prompts (e.g., ``photo of J3NN13 person wearing blue shirt'') to monitor training progress.
-  \item \textbf{Model Checkpointing:} LoRA weights saved at epochs 6, 8, 10, 12 to identify optimal checkpoint.
-\end{itemize}
+Vanilla Stable Diffusion v1.5 lacks photorealistic capabilities necessary for high-quality celebrity personalization. Consequently, a community-fine-tuned model (\textbf{SG161222/Realistic\_Vision\_V5.1\_noVAE}) \cite{sg161222_realistic_vision} specializing in realistic portrait generation was employed for all subsequent experiments.
+
+Table \ref{tab:common-config} specifies the common training configuration used consistently across experiments 1--3. For each experiment, dataset versions 1, 2, and 3 respectively were used to investigate the effect of caption structure on model performance.
 
 
-\subsection{Evaluation Metrics for Personalized Generation}
-
-We evaluate the quality of personalized image generation using two complementary perceptual metrics:
-
-\begin{itemize}
-
-  \item \textbf{LPIPS (Learned Perceptual Image Patch Similarity):}  
-  LPIPS measures perceptual similarity between generated and reference training images by computing distances in the feature space of a pre-trained deep network (we use AlexNet). It is computed as:
-  \[
-  \text{LPIPS}(x, y) = \sum_l \frac{1}{H_l W_l} \sum_{h,w} \left\| w_l \odot (f_l^{(x)}(h,w) - f_l^{(y)}(h,w)) \right\|_2^2
-  \]
-  where $f_l$ denotes layer activations, $w_l$ are learned weights, and $\odot$ is element-wise multiplication. Lower scores indicate better identity preservation (target: $< 0.20$ for excellent results).
-
-  \item \textbf{FID (Fr\\'echet Inception Distance):}  
-  FID measures the statistical distance between feature distributions of generated and real reference images using the Inception-v3 network:
-  \[
-  \text{FID} = \left\| \mu_x - \mu_y \right\|_2^2 + \text{Tr}\left(\Sigma_x + \Sigma_y - 2(\Sigma_x \Sigma_y)^{1/2}\right)
-  \]
-  where $\mu$ and $\Sigma$ denote mean and covariance of features. Lower scores indicate better overall generation quality and diversity (target: $< 30$ for good results).
-
-  \item \textbf{Visual Inspection:}  
-  We qualitatively assess generated images for identity consistency, detail preservation, and diversity across different prompt variations.
-
-\end{itemize}
-
-\subsection{Evaluation Protocol}
-
-For each trained LoRA checkpoint, we:
-\begin{enumerate}
-  \item Generate 50-100 diverse images using varied prompts containing the identity token
-  \item Compare generated images to training reference images using LPIPS
-  \item Compute FID against the full reference dataset
-  \item Identify the best-performing checkpoint based on metric scores
-  \item Visually inspect generated samples for quality and artifacts
-\end{enumerate}
-
-
-
-\subsection{Results and Analysis}
-
-We present results from fine-tuning LoRA models on three caption strategy variants (v1: generic, v2: detailed, v3: general). Each model was evaluated using LPIPS for identity preservation and FID for overall generation quality.
-
-\subsubsection{Quantitative Results: LPIPS and FID Scores}
 
 \begin{table}[H]
   \centering
-  \caption{Evaluation metrics for Jennie dataset across caption strategies}
-  \label{tab:results-summary}
-  \begin{tabular}{@{}lcccc@{}}
+  \caption{Common training configuration for experiments 1--3}
+  \label{tab:common-config}
+  \begin{tabular}{@{}lc@{}}
     \toprule
-    Model Version & Caption Type & LPIPS & FID & Quality Assessment \\
+    Parameter & Value \\
     \midrule
-    v1 & Generic (``J3NN13 person'') & 0.284 & 42.3 & Moderate preservation \\
-    v2 & Detailed (varied descriptions) & 0.156 & 18.7 & Excellent preservation \\
-    v3 & General (moderate detail) & 0.201 & 26.5 & Good preservation \\
+    Base Model & SG161222/Realistic\_Vision\_V5.1\_noVAE \\
+    Dataset Size & 151 images \\
+    LoRA Rank ($r$) & 32 \\
+    LoRA Alpha ($\alpha$) & 16 \\
+    LoRA Dropout & 0.1 \\
+    Target Modules & to\_q, to\_k, to\_v, to\_out.0 \\
+    Batch Size & 2 \\
+    Learning Rate & $5 \times 10^{-5}$ \\
+    Training Epochs & 300 \\
+    \midrule
+    Inference model & SG161222/Realistic\_Vision\_V5.1\_noVAE \\
+    
     \bottomrule
   \end{tabular}
 \end{table}
 
-\textbf{Key Findings:}
+However, for each experiment, we use dataset versions 1 to 3 respectively.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.75\linewidth]{assets/exp1_preview.png}
+    \caption{Experiment 1 samples}
+    \label{fig:exp1_preview}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.75\linewidth]{assets/exp2_preview.png}
+    \caption{Experiment 2 samples}
+    \label{fig:exp2_preview}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.75\linewidth]{assets/exp3_preview.png}
+    \caption{Experiment 3 samples}
+    \label{fig:exp3_preview}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.75\linewidth]{assets/exp4_preview.png}
+    \caption{Experiment 4 samples}
+    \label{fig:exp4_preview}
+\end{figure}
+\subsection{Transferred inference experiment (experiment 4)}
+
+Experiments 1--3 did not reach the quality reported in community tutorials. To assess the effect of the inference model, we separate training from inference: LoRA weights are trained on Stable Diffusion v1.5 and later applied to the Realistic Vision model at inference time. This cross-model transfer evaluates whether features learned during training can improve generation quality when used with a higher-fidelity, photorealistic base model.
+
+\begin{table}[H]
+  \centering
+  \caption{Training configuration for experiment 4: cross-model transfer}
+  \label{tab:exp4-config}
+  \begin{tabular}{@{}lc@{}}
+    \toprule
+    Parameter & Value \\
+    \midrule
+    Base Model (Training) & runwayml/stable-diffusion-v1-5 \\
+    Dataset Size & 151 images \\
+    LoRA Rank ($r$) & 32 \\
+    LoRA Alpha ($\alpha$) & 16 \\
+    LoRA Dropout & 0.1 \\
+    Target Modules & to\_q, to\_k, to\_v, to\_out.0 \\
+    Batch Size & 2 \\
+    Learning Rate & $5 \times 10^{-5}$ \\
+    Training Epochs & 300 \\
+    \midrule
+    Base Model (Inference) & SG161222/Realistic\_Vision\_V5.1\_noVAE \\
+    
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+
+\subsection{Comparison across all experiments}
+
+Figure~\ref{fig:metrics} summarizes LPIPS and FID across all experiments. 
+Visual inspection indicates that Experiments~1 and~4 produce the most natural samples. 
+Quantitatively, Table~\ref{tab:all-experiments} shows Experiment~4 achieving the lowest LPIPS of \textbf{0.752}.
+An additional cross-model settings reported in Table~\ref{tab:additional-experiments}. 
+Further analysis is provided in the Discussion section.
+
+
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.75\linewidth]{assets/_metrics.png}
+    \caption{LPIPS and FID metrics across all experiments}
+    \label{fig:metrics}
+\end{figure}
+
+
+\begin{table}[H]
+  \centering
+  \caption{Summary of all experiments}
+  \label{tab:all-experiments}
+  \begin{tabular}{@{}lllllcc@{}}
+    \toprule
+    Run & Base model & Infer. model & Caption type & Guidance & \textbf{LPIPS} & \textbf{FID} \\
+    \midrule
+    Experiment 1 & R.Vision & R.Vision & v1 & 4.0 & 0.809 & 192.3 \\
+    Experiment 1 & R.Vision & R.Vision & v1 & 6.0 & 0.797 & 195.4 \\
+    Experiment 1 & R.Vision & R.Vision & v1 & 7.5 & 0.812 & 196.4 \\
+    \midrule
+    Experiment 2 & R.Vision & R.Vision & v2 & 4.0 & 0.786 & 199.6 \\
+    Experiment 2 & R.Vision & R.Vision & v2 & 6.0 & 0.782 & 194.7 \\
+    Experiment 2 & R.Vision & R.Vision & v2 & 7.5 & 0.764 & 191.9 \\
+    \midrule
+    Experiment 3 & R.Vision & R.Vision & v3 & 4.0 & 0.765 & \textbf{182.2} \\
+    Experiment 3 & R.Vision & R.Vision & v3 & 6.0 & 0.765 & 186.6 \\
+    Experiment 3 & R.Vision & R.Vision & v3 & 7.5 & 0.782 & 182.5 \\
+    \midrule
+    Experiment 4 & R.Vision & SD v1.5 & v3 & 4.0 & \textbf{0.752} & 198.4 \\
+    Experiment 4 & R.Vision & SD v1.5 & v3 & 6.0 & 0.754 & 207.3 \\
+    Experiment 4 & R.Vision & SD v1.5 & v3 & 7.5 & 0.753 & 215.9 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\begin{table}[H]
+  \centering
+  \caption{Additional experiments}
+  \label{tab:additional-experiments}
+  \begin{tabular}{@{}lllllcc@{}}
+    \toprule
+    Run & Base model & Infer. model & Caption type & Guidance & LPIPS & FID \\
+    \midrule
+    Experiment 1 & R.Vision & SD v1.5 & v1 & 4.0 & 0.816 & 255.5 \\
+    Experiment 1 & R.Vision & SD v1.5 & v1 & 6.0 & 0.835 & 217.7 \\
+    Experiment 1 & R.Vision & SD v1.5 & v1 & 7.5 & 0.828 & 202.5 \\
+    \midrule
+    Experiment 2 & R.Vision & SD v1.5 & v3 & 4.0 & 0.806 & 299.5 \\
+    Experiment 2 & R.Vision & SD v1.5 & v3 & 6.0 & 0.818 & 242.2 \\
+    Experiment 2 & R.Vision & SD v1.5 & v3 & 7.5 & 0.800 & 224.1 \\
+    \midrule
+    Experiment 3 & R.Vision & SD v1.5 & v4 & 4.0 & 0.808 & 243.5 \\
+    Experiment 3 & R.Vision & SD v1.5 & v4 & 6.0 & 0.813 & 214.6 \\
+    Experiment 3 & R.Vision & SD v1.5 & v4 & 7.5 & 0.793 & 202.3 \\
+    \midrule
+    Experiment 4 & SD v1.5 & SD v1.5 & v4 & 4.0 & 0.787 & 181.6 \\
+    Experiment 4 & SD v1.5 & SD v1.5 & v4 & 6.0 & 0.758 & 196.2 \\
+    Experiment 4 & SD v1.5 & SD v1.5 & v4 & 7.5 & 0.772 & 184.2 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+
+\subsection{Evaluation protocol}
+
+For each experiment, the following evaluation procedure was applied:
 
 \begin{enumerate}
-  \item \textbf{Impact of Caption Quality:} The detailed caption strategy (v2) significantly outperforms generic captions (v1), with LPIPS improvement of 45\% ($0.284 \to 0.156$) and FID improvement of 56\% ($42.3 \to 18.7$). This demonstrates that rich, descriptive captions substantially enhance both identity preservation and generation quality.
-  
-  \item \textbf{Practical Trade-off:} Version 3 (general captions) provides a practical middle ground, achieving 29\% LPIPS improvement over v1 and 37\% FID improvement, while requiring less annotation effort than v2.
-  
-  \item \textbf{Identity Preservation:} Only v2 achieves excellent LPIPS score ($< 0.15$), indicating that generic identifiers alone are insufficient for faithful identity preservation in celebrity personalization.
-  
-  \item \textbf{Generation Quality:} v2's FID of 18.7 is well within the ``good'' range ($ < 30$), suggesting diverse, high-quality generation across varied prompts.
+  \item Image generation: 5 distinct text prompts were used to generate 4 images per prompt, yielding 20 generated images total. Inference parameters were set to 60 diffusion steps with guidance scale $\lambda \in \{4.0, 6.0, 7.5\}$.
+  \item LPIPS computation: Learned Perceptual Image Patch Similarity was computed by comparing each generated image to randomly selected reference images from the training set using the AlexNet feature extractor.
+  \item FID computation: Fréchet Inception Distance was calculated between feature distributions of the 20 generated images and 151 reference training images using Inception-v3.
+  \item Qualitative analysis: Generated samples were visually assessed for identity consistency, artifact presence, and adherence to text prompts.
 \end{enumerate}
 
-\subsubsection{Qualitative Analysis}
+\textbf{Note:} The relatively small number of generated images (20 total) for evaluation may introduce variance in metric estimates. Future work should employ larger evaluation sets (100+ images) for more robust and statistically reliable metric computation.
 
-Visual inspection of generated images reveals:
 
-\begin{itemize}
-  \item \textbf{v1 (Generic captions):} Generated images show recognizable subject characteristics but with inconsistent facial features, pose variations, and occasional identity drift across prompts.
-  
-  \item \textbf{v2 (Detailed captions):} Generated images exhibit strong identity consistency across diverse scenes and poses. Fine details (hair style, facial features) are well-preserved. Models respond appropriately to descriptive prompts (e.g., ``smiling'', ``wearing glasses'').
-  
-  \item \textbf{v3 (General captions):} Intermediate results with reasonable identity consistency and good responsiveness to prompt variations, though less precise than v2.
-\end{itemize}
+\subsection{Discussion}
 
-\subsubsection{Checkpoint Selection}
-
-Fine-tuning checkpoints saved at epochs 6, 8, 10, 12 revealed that epoch 10 typically yielded optimal performance. Early epochs (6-8) showed underfitting, while later epochs (12+) occasionally showed signs of overfitting with reduced generation diversity.
-
-\section{Conclusion and Future Work}
-
-\subsection{Summary of Findings}
-
-This project successfully demonstrates a PyTorch-based implementation of LoRA fine-tuning for Stable Diffusion personalization, achieving results comparable to UI-based tools (Kohya, A1111) while providing full code transparency and extensibility.
-
-Key conclusions from our experiments:
+\subsection{Key findings}
 
 \begin{enumerate}
-  \item \textbf{Caption Quality is Critical:} Detailed, descriptive captions significantly outperform generic fixed identifiers. A 45\% improvement in LPIPS ($0.284 \to 0.156$) and 56\% in FID ($42.3 \to 18.7$) demonstrates that investing in high-quality annotations pays substantial dividends.
+  \item \textbf{Training duration:} \\
   
-  \item \textbf{Practical Trade-offs Exist:} While detailed captions provide the best results, general captions offer reasonable performance (LPIPS 0.201, FID 26.5) with substantially less annotation effort, making them suitable for resource-constrained scenarios.
+  Experiment 0 with 100 epochs demonstrated insufficient convergence. Extending training to 300 epochs (approximately 22,800 training steps with batch size 2) proved necessary for model adaptation.
+
+  If the generated images still exhibit poor quality (many artifacts, object edges is too sharp, background inconsistencies or it feels like a painting) or weak identity preservation, consider increasing the number of training epochs further (e.g., 400-500 epochs)
   
-  \item \textbf{PyTorch Implementation Feasibility:} Our modular PyTorch codebase achieves performance parity with community tools, validating the approach as a viable research-friendly alternative to UI-based solutions.
+  The samples from Experiment 2 and Experiment 3 show low quality at 300 epochs, indicating that even longer training may be required for optimal results.
+    
+  \item \textbf{Caption strategy trade-offs:} 
+  \begin{itemize}
+    \item Version 1 (single trigger word): \\
+    Minimal information, requiring purely visual identity learning.
+    Surprisingly, this simple approach can achieve reasonably good results with sufficient training, see Fig. \ref{fig:exp1_best}.
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.75\linewidth]{assets/exp1_best.png}
+        \caption{Best samples from Experiment 1}
+        \label{fig:exp1_best}
+    \end{figure}
+
+    The weakness of this approach is that it can only generate good results of close-up portraits or features that are very similar to the training images. The model lacks contextual understanding, leading to failures when generating diverse poses, backgrounds, or full-body shots. \\
+    \item Version 2 (detailed attribute tags): 
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.75\linewidth]{assets/exp2_best.png}
+        \caption{Best samples from Experiment 2}
+        \label{fig:exp2_best}
+    \end{figure}
+
+
+    \item Version 3 (simplified attribute tags): 
+    Optimal balance between annotation simplicity and attribute diversity. Good results already achieve in Experiment 4, see Fig. \ref{fig:exp4_best}.
+
+  \end{itemize}
+
+  \item \textbf{Cross-model transfer:} \\
+  Experiment 4 demonstrated that training LoRA weights on Stable Diffusion v1.5 and applying them to the Realistic Vision model during inference can enhance identity preservation (lowest LPIPS).
+  The general base model (SD v1.5) appears to force the LoRA to learn stronger identity features and information, which then benefit from the photorealistic capabilities of the Realistic Vision model at inference time.
+  But this improvement in LPIPS comes at the cost of overall image quality (higher FID), likely due to domain mismatch between training and inference models.
+
+  \begin{figure}[H]
+      \centering
+      \includegraphics[width=0.75\linewidth]{assets/exp4_best.png}
+      \caption{Best samples from Experiment 4}
+      \label{fig:exp4_best}
+  \end{figure}
+
+  Notice that the style of Realistic Vision model (the overall theme and lighting is dark and moody) is still dominant in the generated images
+
+
+  \item \textbf{Inference prompts:} \\
+  Carefully chosen keywords in inference prompts significantly influence generation quality. Including descriptive words like ``HD quality'', ``good lighting'', ``RAW photo'', or ``4K'' noticeably improves realism and quality. A practical tip: investigate the training data and captions used to train your base model. Reusing similar keywords and phrasing patterns from the model's training set can further enhance results, as the model is more familiar with these descriptors.
+
+  \item \textbf{Guidance scale:} \\
+  A guidance scale is a hyperparameter that controls the trade-off between how closely the generated image follows the text prompt versus how much creativity/diversity is allowed. \\
+  Higher guidance scales force the model to obey the prompt more strictly, which can improve relevance but may also introduce unwanted artifacts if words in the prompt are ambiguous or unfamiliar to the model during training. \\
+
+  This bad effect of high guidance scale can be seen clearly in Experiment 3 and Experiment 4, where increasing the guidance scale to 7.5 leads to more artifacts, distorted body parts and unnarual textures and skin tones.
+
+  \item \textbf{Negative prompts:} \\
+  Carefully crafted negative prompts offer an effective way to enhance generation quality and structural correctness. By specifying undesired features, the model learns to actively avoid them, resulting in improved image structure and coherence. 
   
-  \item \textbf{Checkpoint Optimization:} Mid-training checkpoints (epoch 10) typically yield optimal balance between learning and generalization, suggesting that fixed training schedules may be suboptimal and adaptive selection strategies could improve results.
+  Across all experiments, asymmetric or misaligned facial features appeared regularly in generated images. Adding negative prompts like ``asymmetric eyes'', ``crossed eyes'', or ``distorted face'' consistently reduced these artifacts. Similarly, negative prompts addressing anatomical issues (e.g., ``wrong anatomy'', ``malformed hands'', ``distorted body parts'') noticeably improved overall generation quality. This approach complements positive prompts and guidance scale adjustments, providing an additional mechanism for fine-tuning output quality.
+
 \end{enumerate}
 
-\subsection{Contributions}
-
+\subsection{Limitations and future work}
+While this work establishes a solid foundation for personalized image generation using LoRA fine-tuning, several limitations and avenues for future research remain:
 \begin{itemize}
-  \item An open-source, reproducible PyTorch implementation of Stable Diffusion LoRA fine-tuning
-  \item Systematic evaluation of caption quality impact on personalized generation
-  \item Integration of LPIPS and FID metrics for quantitative evaluation
-  \item Modular, extensible codebase suitable for research and experimentation
-\end{itemize}
+  \item \textbf{Natural sentence captions vs keyword-based captions:} \\
+  The current approach relies exclusively on keyword-based captions. Future research should explore natural language descriptions (e.g., ``J3NN13 is smiling at the camera with long black hair'') to assess whether more contextual, grammatically complete captions improve identity learning and generation flexibility. Natural sentences may provide richer semantic relationships between attributes.
+  
+  \item \textbf{Extended training for complex caption structures:} \\
+  Experiments 2 and 3, which employed more detailed caption versions, showed suboptimal results at 300 epochs. Increasing training duration (e.g., 500--1000 epochs) for datasets with comprehensive attribute annotations may allow the model to fully leverage the additional contextual information and achieve better identity preservation with enhanced controllability.
+  
+  \item \textbf{Facial features and hand generation:} \\
+  Despite negative prompt adjustments, eyes and hands remain challenging to generate accurately. Asymmetric eyes, misaligned pupils, and malformed fingers appeared across experiments. Future work should investigate targeted training techniques (e.g., weighted loss on facial regions, specialized hand datasets) or post-processing refinement methods to address these persistent anatomical issues.
 
-\subsection{Future Work}
-
-Promising directions for future research include:
-
-\begin{itemize}
-  \item \textbf{Advanced Caption Strategies:} Investigate hierarchical captions, automated caption generation, or weakly-supervised annotation approaches to reduce labeling burden while maintaining quality.
+  \item \textbf{Post-processing and refinement workflows:} \\
+  Integrating post-processing techniques such as face restoration models (e.g., CodeFormer, GFPGAN), inpainting tools, or ControlNet-based refinement could systematically improve generation quality. Establishing automated pipelines that combine LoRA generation with targeted post-processing steps would enhance practical applicability while maintaining identity consistency.
   
-  \item \textbf{Hybrid Fine-Tuning:} Combine LoRA with other adaptation techniques (e.g., textual inversion, DreamBooth-style class preservation) to achieve even better identity preservation.
-  
-  \item \textbf{Multi-Subject Personalization:} Extend to scenarios with multiple subjects in a single model, studying cross-subject interference and mitigation strategies.
-  
-  \item \textbf{Generative Metrics Analysis:} Deeper investigation of LPIPS vs. FID trade-offs; explore additional metrics like CelebA-attribute preservation scores for celebrity applications.
-  
-  \item \textbf{Computational Efficiency:} Study inference optimization techniques (quantization, distillation) to enable deployment of personalized models on resource-constrained devices.
-  
-  \item \textbf{Real-Time Adaptation:} Develop techniques for on-the-fly LoRA fine-tuning with streaming data, enabling personalized generation with minimal setup.
-  
-  \item \textbf{Cross-Domain Transfer:} Evaluate whether LoRA weights trained on one subject transfer to similar subjects, potentially reducing per-subject fine-tuning cost.
 \end{itemize}
 
 \newpage

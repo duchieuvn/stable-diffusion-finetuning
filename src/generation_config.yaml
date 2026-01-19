@@ -13,13 +13,12 @@ generation:
   num_images: 4  # Number of images per prompt
   negative_prompt: "ugly, tiling, deformed hands, deformed eyes"
   num_inference_steps: 60
-  guidance_scale: 6
+  guidance_scale: 7.5
 
 # Sample prompts (for config4)
 sample_prompts:
   - "J3NN13, RAW photo, high quality, close-up selfie in a room background"
-  - "J3NN13 close-up teeth-smilling, tilted head, revealing chest"
-  - "J3NN13, RAW photo, high quality, close-up selfie, revealing chest"
-  - "J3NN13, RAW photo, high quality, close-up, straight-look, chuchu, revealing shoulders"
-  - "J3NN13, close-up, long hair, straight-look, revealing shoulders"
-  - "matte beige sphere, dramatic lighting, camera f1.6 lens ,rich colors ,hyper realistic ,lifelike texture"
+  - "J3NN13 close-up selfie, wearing a crop-top revealing chest"
+  - "J3NN13, RAW photo, HD quality, close-up selfie, revealing chest"
+  - "J3NN13, RAW photo, high quality, close-up shot with face and half body, revealing shoulders"
+  - "a photorealistic selfie of J3NN13, close-up, 8k quality, soft lightning"

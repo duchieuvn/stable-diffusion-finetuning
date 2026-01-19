@@ -1,0 +1,18 @@
+{
+  "lora_folder": "sd15_J3NN13_v4_300_r32a16_15-01-2026",
+  "base_model": "runwayml/stable-diffusion-v1-5",
+  "gen_folder": "/home/8f95/stable-diffusion-finetuning/src/../testgen/sd15_J3NN13_v4_300_r32a16_15-01-2026/sd15_5prompts_4imgs_s60_g7.5",
+  "reference_dir": "/home/8f95/stable-diffusion-finetuning/src/../dataset/jennie_v3/images",
+  "num_generated_images": 20,
+  "timestamp": "1768657512.6295886",
+  "lpips": {
+    "score": 0.793109193444252,
+    "std": 0.055136248039661134,
+    "num_pairs": 20,
+    "interpretation": "Weak identity preservation"
+  },
+  "fid": {
+    "score": 202.30483669290192,
+    "interpretation": "Poor quality"
+  }
+}
