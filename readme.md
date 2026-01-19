@@ -1,6 +1,19 @@
 # Stable Diffusion Fine-Tuning
 
-A PyTorch-based project for fine-tuning Stable Diffusion models on custom datasets. This repository provides tools for training the model with specific visual concepts and generating high-quality images based on your fine-tuned model.
+A PyTorch-based project for fine-tuning Stable Diffusion models on custom datasets. This repository provides Python scripts for training the model with specific visual concepts and generating high-quality images based on your fine-tuned model.
+
+## Results
+
+Report for this project can be found in `docs/report.pdf`
+
+### Experiment 1: Baseline with Simple Trigger Word (v1 Captions)
+
+<!-- ![Experiment 1 Best Samples](docs/assets/exp1_best.png) -->
+<img src="docs/assets/exp1_best.png" width="600" alt="Experiment 1 Best Samples">
+
+### Experiment 4: Cross-Model Transfer Learning
+
+<img src="docs/assets/exp4_best.png" width="600" alt="Experiment 4 Best Samples">
 
 ## Features
 
@@ -35,17 +48,34 @@ pip install -r requirements.txt
 
 ## Project Structure
 
+- Pretrained LoRA weights can be found in `runs.zip`
+- Training dataset can be found in `dataset.zip`
+
 ```
 src/
 ├── train.py                  # Main training script
 ├── gen.py                    # Image generation script
+├── gen_full.py               # Full pipeline generation script
 ├── dataset.py               # Dataset utilities and loaders
-├── stl10prepare.py          # STL-10 dataset preparation
+├── evaluate.py              # Evaluation metrics (FID, LPIPS)
+├── plot.ipynb               # Visualization and plotting notebook
 ├── training_config.yaml     # Training hyperparameters
 └── generation_config.yaml   # Generation settings
 
-generation/                  # Generated images and configs
-└── [experiment_dirs]/
+testgen/                     # Test generation outputs
+├── exp1/ - exp4/            # Test images for each experiment
+└── sd15_*/                  # Stable Diffusion v1.5 variants
+
+metrics/                     # Evaluation metrics (FID, LPIPS)
+├── exp1/ - exp4/            # Metrics for baseline experiments
+└── sd15_*/                  # Metrics for SD v1.5 variants
+
+docs/                        # Documentation
+├── report.tex               # LaTeX report
+├── evaluation_guide.md      # Detailed evaluation guide
+└── assets/                  # Research assets and experimental results
+    ├── literature.bib       # Bibliography
+    └── exp1/ - exp4/        # Experiment figures
 ```
 
 ## Usage
@@ -81,33 +111,7 @@ Edit the YAML files to customize training and generation:
 - **training_config.yaml**: Learning rate, batch size, epochs, model architecture
 - **generation_config.yaml**: Number of images, inference steps, guidance scale, prompts
 
-## Results
-
-### Experiment 1: Baseline with Simple Trigger Word (v1 Captions)
-
-![Experiment 1 Best Samples](docs/assets/exp1_best.png)
-
-Single unique trigger word "J3NN13" with minimal contextual information. Achieves reasonable identity preservation but limited to close-up portraits similar to training images.
-
-### Experiment 2: Detailed Attribute Tags (v2 Captions)
-
-![Experiment 2 Best Samples](docs/assets/exp2_best.png)
-
-Rich keyword annotations combining trigger word with detailed attribute descriptors (expressions, camera framing, appearance details). Provides diverse contextual information but requires more training for optimal results.
-
-### Experiment 3: Simplified Attribute Tags (v3 Captions)
-
-![Experiment 3 Best Samples](docs/assets/exp3_best.png)
-
-Balanced approach with simplified comma-separated keywords focusing on essential identity and contextual features. Good balance between annotation simplicity and attribute diversity.
-
-### Experiment 4: Cross-Model Transfer Learning
-
-![Experiment 4 Best Samples](docs/assets/exp4_best.png)
-
-LoRA weights trained on Stable Diffusion v1.5 with v3 captions, then applied to Realistic Vision model for inference. Demonstrates best identity preservation (lowest LPIPS of 0.752) by leveraging photorealistic model capabilities.
-
-### Metrics Summary
+## Metrics Summary
 
 ![Metrics Comparison](docs/assets/_metrics.png)
 

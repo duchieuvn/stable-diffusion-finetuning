@@ -355,10 +355,18 @@ Further analysis is provided in the Discussion section.
 For each experiment, the following evaluation procedure was applied:
 
 \begin{enumerate}
-  \item Image generation: 5 distinct text prompts were used to generate 4 images per prompt, yielding 20 generated images total. Inference parameters were set to 60 diffusion steps with guidance scale $\lambda \in \{4.0, 6.0, 7.5\}$.
-  \item LPIPS computation: Learned Perceptual Image Patch Similarity was computed by comparing each generated image to randomly selected reference images from the training set using the AlexNet feature extractor.
-  \item FID computation: Fréchet Inception Distance was calculated between feature distributions of the 20 generated images and 151 reference training images using Inception-v3.
-  \item Qualitative analysis: Generated samples were visually assessed for identity consistency, artifact presence, and adherence to text prompts.
+  \item \textbf{Inference prompt design}: Prompts were given in a way that it includes words used during training to check and also words that were not used during training to test the learning ability and the generalization of the model.
+
+  Example prompts:
+  \begin{itemize}
+    \item ``J3NN13, close-up selfie in a room background''
+    \item ``J3NN13, HD quality, RAW photo, good lighting, selfie in a gym background''
+  \end{itemize}
+
+  \item \textbf{Image generation}: 5 distinct text prompts were used to generate 4 images per prompt, yielding 20 generated images total. Inference parameters were set to 60 diffusion steps with guidance scale $\lambda \in \{4.0, 6.0, 7.5\}$.
+  \item \textbf{LPIPS computation}: Learned Perceptual Image Patch Similarity was computed by comparing each generated image to randomly selected reference images from the training set using the AlexNet feature extractor.
+  \item \textbf{FID computation}: Fréchet Inception Distance was calculated between feature distributions of the 20 generated images and 151 reference training images using Inception-v3.
+  \item \textbf{Qualitative analysis}: Generated samples were visually assessed for identity consistency, artifact presence, and adherence to text prompts.
 \end{enumerate}
 
 \textbf{Note:} The relatively small number of generated images (20 total) for evaluation may introduce variance in metric estimates. Future work should employ larger evaluation sets (100+ images) for more robust and statistically reliable metric computation.

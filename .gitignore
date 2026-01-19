@@ -1,6 +1,5 @@
 *.txt
 *.bin
-*.zip
 *.tar
 *.gz
 __pycache__/
@@ -8,3 +7,11 @@ __pycache__/
 venv/
 runs/
 *.log
+*.aux
+*.out
+*.bcf
+*.blg
+*.fdb_latexmk
+*.fls
+*.xml
+*.bbl
