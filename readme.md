@@ -1,6 +1,6 @@
 # Stable Diffusion Fine-Tuning
 
-A PyTorch-based project for fine-tuning Stable Diffusion models on custom datasets. This repository provides Python scripts for training the model with specific visual concepts and generating high-quality images based on your fine-tuned model.
+A PyTorch-based project for LoRA fine-tuning Stable Diffusion models on custom datasets. This repository provides Python scripts for training the model with specific visual concepts and generating high-quality images based on your fine-tuned model.
 
 ## Results
 
@@ -117,4 +117,4 @@ Edit the YAML files to customize training and generation:
 
 LPIPS and FID scores across all experiments, showing trade-offs between identity preservation and overall generation quality.
 
-Generated images and experiments are stored in the `generation/` directory organized by experiment configurations and timestamps.
+Generated images and experiments are stored in the `testgen/` directory organized by experiment configurations and timestamps.
